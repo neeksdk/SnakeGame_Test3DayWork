@@ -11,9 +11,7 @@ namespace com.neeksdk.SnakeTest {
         
         private GameTilePool _tilePool;
         private SnakeFoodPool _foodPool;
-        private int _columnsCount;
-        private IGameTile[] _gameField;
-        private IGameTile[] _gameFieldWithoutBorders;
+        private IGameTile[,] _gameField;
         private ISnakeFood _snakeFoodOnGameField;
 
         private void Start() {
@@ -29,12 +27,10 @@ namespace com.neeksdk.SnakeTest {
         public void GenerateGameField(int row, int col) {
             int rowWithWalls = row + 2;
             int columnWithWalls = col + 2;
-            _columnsCount = columnWithWalls;
-            _gameField = new IGameTile[rowWithWalls * columnWithWalls];
-            _gameFieldWithoutBorders = new IGameTile[row * col];
+            _gameField = new IGameTile[rowWithWalls, columnWithWalls];
 
-            for (int j = 0; j < columnWithWalls; j++) {
-                for (int i = 0; i < rowWithWalls; i++) {
+            for (int i = 0; i < rowWithWalls; i++) {
+                for (int j = 0; j < columnWithWalls; j++) {
                     IGameTile newGameTile = _tilePool.GetGameTileFromPool(gameTileScriptableObject);
                     GameObject tileGameObject = newGameTile.GetGameObject();
                     tileGameObject.transform.position = new Vector3(i, j, 0);
@@ -44,11 +40,7 @@ namespace com.neeksdk.SnakeTest {
                     tileGameObject.name = $"{newGameTile.GetName()}_{i}_{j}";
                     tileGameObject.tag = "GameField";
                     SetTileMapOffset(ref newGameTile, i, j, rowWithWalls - 1, columnWithWalls - 1);
-                    _gameField[j + i * _columnsCount] = newGameTile;
-
-                    if (j > 0 && i > 0 && j < columnWithWalls - 1 && i < rowWithWalls - 1) {
-                        _gameFieldWithoutBorders[j - 1 + (i - 1) * (_columnsCount - 2)] = newGameTile;
-                    }
+                    _gameField[i, j] = newGameTile;
 
                     if (i == 0 || j == 0 || i == rowWithWalls - 1 || j == columnWithWalls - 1) {
                         tileGameObject.tag = "Obstacle";
@@ -65,8 +57,12 @@ namespace com.neeksdk.SnakeTest {
         }
 
         private void DestroyGameField() {
-            for (int i = _gameField.Length - 1; i >= 0; i--) {
+            /*for (int i = _gameField.Length - 1; i >= 0; i--) {
                 _tilePool.ReturnGameTileToPool(_gameField[i]);
+            }*/
+
+            foreach (IGameTile gameTile in _gameField) {
+                _tilePool.ReturnGameTileToPool(gameTile);
             }
             
             _foodPool.ReturnSnakeFoodToPool(_snakeFoodOnGameField);
@@ -78,9 +74,7 @@ namespace com.neeksdk.SnakeTest {
         public void GenerateSnakeFoodOnGameField(int row, int column) {
             _snakeFoodOnGameField = _foodPool.GetSnakeFoodFromPool(snakeFoodScriptableObject);
             GameObject foodGameObject = _snakeFoodOnGameField.GetGameObject();
-            
-            //Exclude game field borders by increasing values by +1
-            foodGameObject.transform.position = new Vector3(row + 1, column + 1, 0); 
+            foodGameObject.transform.position = new Vector3(row, column, 0); 
             foodGameObject.SetActive(true);
         }
 
@@ -88,11 +82,7 @@ namespace com.neeksdk.SnakeTest {
             _foodPool.ReturnSnakeFoodToPool(eatenFood);
         }
 
-        public IGameTile[] GameFieldTileDataWithoutBorders() {
-            return _gameFieldWithoutBorders;
-        }
-
-        public IGameTile[] GameFieldTileDataWithBorders() {
+        public IGameTile[,] GameFieldTileDataWithBorders() {
             return _gameField;
         }
 
@@ -124,10 +114,6 @@ namespace com.neeksdk.SnakeTest {
             
             gameTile.SetTileMapOffset(horizontalOffset, verticalOffset);
             gameTile.SetTileData(row, column, tileIsOccupiedBySnakeFoodOrWall);
-        }
-
-        private IGameTile GameTile(int row, int column) {
-            return _gameField[column + row * _columnsCount];
         }
     }
 }

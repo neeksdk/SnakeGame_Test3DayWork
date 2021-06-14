@@ -49,6 +49,7 @@ namespace com.neeksdk.SnakeTest {
 
         public virtual void SetTileData(bool isOccupiedBySnakeFoodOrWall) {
             TileData.IsOccupiedBySnakeFoodOrWall = isOccupiedBySnakeFoodOrWall;
+            //Material.color = isOccupiedBySnakeFoodOrWall ? Color.red : Color.white;
         }
 
         public virtual bool IsTileDataOccupiedBySnakeOrWall() {

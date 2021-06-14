@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using com.neeksdk.SnakeTest.GameMenu;
@@ -14,8 +13,9 @@ namespace com.neeksdk.SnakeTest.Snake {
         private HeadLookDirections _headLookWhenLastMove, _headLooksNow;
         private readonly List<SnakePart> _arrayOfGeneratedSnakeBodies = new List<SnakePart>();
         private float _snakeSpeed;
+        private Vector3Int _snakeHeadPosition;
         
-        public static event Action SnakeIsDead = delegate { }; 
+        public static event System.Action SnakeIsDead = delegate { };
 
         private enum HeadLookDirections {
             Up,
@@ -49,6 +49,7 @@ namespace com.neeksdk.SnakeTest.Snake {
 
         private void StartSnakeMovementAfterPause() {
             _snakeIsDead = false;
+            _snakeHeadPosition = Vector3Int.RoundToInt(transform.position);
             InvokeRepeating(nameof(MoveHead), 1f, _snakeSpeed);
         }
 
@@ -116,29 +117,12 @@ namespace com.neeksdk.SnakeTest.Snake {
 
         private void MoveHead() {
             Vector3 headRotation = transform.rotation.eulerAngles;
-            Vector3 headPosition = Vector3.zero;
-            switch (_headLooksNow) {
-                case HeadLookDirections.Up:
-                    headPosition = Vector3.up;
-                    _headLookWhenLastMove = HeadLookDirections.Up;
-                    break;
-                case HeadLookDirections.Right:
-                    headPosition = Vector3.right;
-                    _headLookWhenLastMove = HeadLookDirections.Right;
-                    break;
-                case HeadLookDirections.Down:
-                    headPosition = Vector3.down;
-                    _headLookWhenLastMove = HeadLookDirections.Down;
-                    break;
-                case HeadLookDirections.Left:
-                    headPosition = Vector3.left;
-                    _headLookWhenLastMove = HeadLookDirections.Left;
-                    break;
-                default:
-                    break;
-            }
+            Vector3Int headPosition = SetHeadPositionBasedOnHeadLooking();
 
             if (_needToInitializeNewSnakePart) {
+
+                ConnectSnakeParts();
+                
                 _needToInitializeNewSnakePart = false;
                 _newSnakePart = InitializeNewSnakeBodyPart();
                 _oldSnakePart = _headSnakePart.GetSnakePartThatFollowingMe();
@@ -147,20 +131,61 @@ namespace com.neeksdk.SnakeTest.Snake {
 
                 _headSnakePart.SetNewTargetThatFollowsMe(null);
 
-                _headSnakePart.SetFollowingPosition(transform.position += headPosition, headRotation);
-                
+                MoveSnakeHeadToNewPosition(headPosition, headRotation);
+
                 _newSnakePart.SetNewFollowingTarget(_headSnakePart);
                 _headSnakePart.SetNewTargetThatFollowsMe(_newSnakePart);
             } else {
-                _headSnakePart.SetFollowingPosition(transform.position += headPosition, headRotation);
-
-                if (_newSnakePart == null) return;
-
-                _newSnakePart.SetNewTargetThatFollowsMe(_oldSnakePart);
-                _oldSnakePart.SetNewFollowingTarget(_newSnakePart);
-                _newSnakePart = null;
-                _oldSnakePart = null;
+                MoveSnakeHeadToNewPosition(headPosition, headRotation);
+                ConnectSnakeParts();
             }
+        }
+
+        private void MoveSnakeHeadToNewPosition(Vector3Int headPosition, Vector3 headRotation) {
+            _snakeHeadPosition += headPosition;
+            transform.position = _snakeHeadPosition;
+
+            _headSnakePart.SetFollowingPosition(_snakeHeadPosition, headRotation);
+        }
+
+        private void ConnectSnakeParts() {
+            if (_newSnakePart == null) return;
+
+            _newSnakePart.SetNewTargetThatFollowsMe(_oldSnakePart);
+            _oldSnakePart.SetNewFollowingTarget(_newSnakePart);
+            _newSnakePart = null;
+            _oldSnakePart = null;
+        }
+
+        private Vector3Int SetHeadPositionBasedOnHeadLooking() {
+            Vector3Int headPosition = Vector3Int.zero;
+
+            switch (_headLooksNow) {
+                case HeadLookDirections.Up:
+                    headPosition = Vector3Int.up;
+                    _headLookWhenLastMove = HeadLookDirections.Up;
+
+                    break;
+                case HeadLookDirections.Right:
+                    headPosition = Vector3Int.right;
+                    _headLookWhenLastMove = HeadLookDirections.Right;
+
+                    break;
+                case HeadLookDirections.Down:
+                    headPosition = Vector3Int.down;
+                    _headLookWhenLastMove = HeadLookDirections.Down;
+
+                    break;
+                case HeadLookDirections.Left:
+                    headPosition = Vector3Int.left;
+                    _headLookWhenLastMove = HeadLookDirections.Left;
+
+                    break;
+                default:
+                    break;
+            }
+
+            return headPosition;
         }
 
         private void Update() {

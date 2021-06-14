@@ -1,4 +1,3 @@
-using System;
 using com.neeksdk.SnakeTest.GameMenu;
 using com.neeksdk.SnakeTest.Snake;
 using UnityEngine;
@@ -42,30 +41,30 @@ namespace com.neeksdk.SnakeTest {
 
         private void MarkEmptyAndOccupiedGameFieldTilesWhenSnakeMoves(int row, int column, bool tileIsOccupied) {
             try {
-                IGameTile[] gameFieldTileData = _gameField.GameFieldTileDataWithBorders();
-                
-                gameFieldTileData[column + row*_gameFieldPlayData.GameFieldDimensionY].SetTileData(tileIsOccupied);
+                IGameTile[,] gameFieldTileData = _gameField.GameFieldTileDataWithBorders();
+                gameFieldTileData[row, column].SetTileData(tileIsOccupied);
                 #pragma warning disable 168
-            } catch (Exception e) { 
+            } catch (System.Exception e) { 
                 #pragma warning restore 168
                 // ignored - this is game field borders
             }
         }
 
         private void GenerateNewSnakeFood() {
-            IGameTile[] gameFieldTileData = _gameField.GameFieldTileDataWithoutBorders();
+            IGameTile[,] gameFieldTileData = _gameField.GameFieldTileDataWithBorders();
 
-            int row = Random.Range(0, _gameFieldPlayData.GameFieldDimensionX);
-            int column = Random.Range(0, _gameFieldPlayData.GameFieldDimensionY);
+            int row = Random.Range(1, _gameFieldPlayData.GameFieldDimensionX - 1);
+            int column = Random.Range(1, _gameFieldPlayData.GameFieldDimensionY - 1);
 
             bool tileIsOccupiedBySnakeOrWall = true;
+            int tryCount = 0;
             
-            while (tileIsOccupiedBySnakeOrWall) {
-                row = Random.Range(0, _gameFieldPlayData.GameFieldDimensionX);
-                column = Random.Range(0, _gameFieldPlayData.GameFieldDimensionY);
+            while (tileIsOccupiedBySnakeOrWall && tryCount < 1000) {
+                row = Random.Range(1, _gameFieldPlayData.GameFieldDimensionX - 1);
+                column = Random.Range(1, _gameFieldPlayData.GameFieldDimensionY - 1);
 
-                tileIsOccupiedBySnakeOrWall = gameFieldTileData[row + column * _gameFieldPlayData.GameFieldDimensionY]
-                    .IsTileDataOccupiedBySnakeOrWall();
+                tileIsOccupiedBySnakeOrWall = gameFieldTileData[row, column].IsTileDataOccupiedBySnakeOrWall();
+                tryCount++;
             }
             
             _gameField.GenerateSnakeFoodOnGameField(row, column);
@@ -80,13 +79,11 @@ namespace com.neeksdk.SnakeTest {
             CheckGamePlayDataForCorrectValues();
             
             _gameField.GenerateGameField(_gameFieldPlayData.GameFieldDimensionX, _gameFieldPlayData.GameFieldDimensionY);
-            IGameTile[] gameFieldTileData = _gameField.GameFieldTileDataWithoutBorders();
+            IGameTile[,] gameFieldTileData = _gameField.GameFieldTileDataWithBorders();
 
-            int columnOfSnakePosition = _gameFieldPlayData.SnakeInitialPositionX * _gameFieldPlayData.GameFieldDimensionY;
-            
-            gameFieldTileData[_gameFieldPlayData.SnakeInitialPositionY     + columnOfSnakePosition].SetTileData(true);
-            gameFieldTileData[_gameFieldPlayData.SnakeInitialPositionY - 1 + columnOfSnakePosition].SetTileData(true);
-            gameFieldTileData[_gameFieldPlayData.SnakeInitialPositionY - 2 + columnOfSnakePosition].SetTileData(true);
+            gameFieldTileData[_gameFieldPlayData.SnakeInitialPositionX, _gameFieldPlayData.SnakeInitialPositionY].SetTileData(true);
+            gameFieldTileData[_gameFieldPlayData.SnakeInitialPositionX - 1, _gameFieldPlayData.SnakeInitialPositionY].SetTileData(true);
+            gameFieldTileData[_gameFieldPlayData.SnakeInitialPositionX - 2, _gameFieldPlayData.SnakeInitialPositionY].SetTileData(true);
 
             _snakeContainer.SetSnakeInitialPosition(_gameFieldPlayData.SnakeInitialPositionX, _gameFieldPlayData.SnakeInitialPositionY);
             _snakeContainer.gameObject.SetActive(true);
